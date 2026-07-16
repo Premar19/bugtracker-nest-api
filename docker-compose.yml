@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bugtracker
+      POSTGRES_PASSWORD: bugtracker
+      POSTGRES_DB: bugtracker
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bugtracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://bugtracker:bugtracker@postgres:5432/bugtracker?schema=public
+      JWT_SECRET: dev-only-secret-change-me
+      JWT_EXPIRES_IN: 1d
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    command: sh -c "npx prisma migrate deploy && node dist/src/main"
+
+volumes:
+  postgres_data:
