@@ -31,7 +31,10 @@ export class IssuesController {
   }
 
   @Get()
-  findAll(@Param('projectId') projectId: string, @Query() query: QueryIssuesDto) {
+  findAll(
+    @Param('projectId') projectId: string,
+    @Query() query: QueryIssuesDto,
+  ) {
     return this.issuesService.findAll(projectId, query);
   }
 

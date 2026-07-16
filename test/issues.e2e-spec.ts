@@ -3,6 +3,12 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
+import {
+  AuthResponseBody,
+  IssueResponseBody,
+  PaginatedIssuesBody,
+  ProjectResponseBody,
+} from './types';
 
 describe('Projects & Issues (e2e)', () => {
   let app: INestApplication<App>;
@@ -20,19 +26,25 @@ describe('Projects & Issues (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
     await app.init();
     server = app.getHttpServer();
 
-    const registerRes = await request(server).post('/auth/register').send({ email, password });
-    accessToken = registerRes.body.accessToken;
+    const registerRes = await request(server)
+      .post('/auth/register')
+      .send({ email, password });
+    accessToken = (registerRes.body as AuthResponseBody).accessToken;
 
     const projectRes = await request(server)
       .post('/projects')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({ name: 'E2E Project' });
-    projectId = projectRes.body.id;
+    projectId = (projectRes.body as ProjectResponseBody).id;
   });
 
   afterAll(async () => {
@@ -59,8 +71,9 @@ describe('Projects & Issues (e2e)', () => {
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 
-    expect(res.body.data).toHaveLength(2);
-    expect(res.body.meta).toMatchObject({ page: 1, limit: 20, total: 2 });
+    const body = res.body as PaginatedIssuesBody;
+    expect(body.data).toHaveLength(2);
+    expect(body.meta).toMatchObject({ page: 1, limit: 20, total: 2 });
   });
 
   it('filters issues by priority', async () => {
@@ -70,8 +83,12 @@ describe('Projects & Issues (e2e)', () => {
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 
-    expect(res.body.data).toHaveLength(1);
-    expect(res.body.data[0]).toMatchObject({ title: 'Critical bug', priority: 'HIGH' });
+    const body = res.body as PaginatedIssuesBody;
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]).toMatchObject({
+      title: 'Critical bug',
+      priority: 'HIGH',
+    });
   });
 
   it('paginates issues', async () => {
@@ -81,8 +98,14 @@ describe('Projects & Issues (e2e)', () => {
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 
-    expect(res.body.data).toHaveLength(1);
-    expect(res.body.meta).toMatchObject({ page: 1, limit: 1, total: 2, pageCount: 2 });
+    const body = res.body as PaginatedIssuesBody;
+    expect(body.data).toHaveLength(1);
+    expect(body.meta).toMatchObject({
+      page: 1,
+      limit: 1,
+      total: 2,
+      pageCount: 2,
+    });
   });
 
   it('updates an issue status', async () => {
@@ -90,7 +113,7 @@ describe('Projects & Issues (e2e)', () => {
       .get(`/projects/${projectId}/issues`)
       .query({ priority: 'HIGH' })
       .set('Authorization', `Bearer ${accessToken}`);
-    const issueId = listRes.body.data[0].id;
+    const issueId = (listRes.body as PaginatedIssuesBody).data[0].id;
 
     const res = await request(server)
       .patch(`/projects/${projectId}/issues/${issueId}`)
@@ -98,7 +121,7 @@ describe('Projects & Issues (e2e)', () => {
       .send({ status: 'IN_PROGRESS' })
       .expect(200);
 
-    expect(res.body.status).toBe('IN_PROGRESS');
+    expect((res.body as IssueResponseBody).status).toBe('IN_PROGRESS');
   });
 
   it('returns 404 for an issue in a non-existent project', () => {

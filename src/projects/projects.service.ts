@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '../../generated/prisma/enums';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
@@ -56,7 +60,9 @@ export class ProjectsService {
 
   private assertOwnerOrAdmin(ownerId: string, user: JwtPayload) {
     if (user.role !== Role.ADMIN && user.sub !== ownerId) {
-      throw new ForbiddenException('Only the project owner or an admin can perform this action');
+      throw new ForbiddenException(
+        'Only the project owner or an admin can perform this action',
+      );
     }
   }
 }

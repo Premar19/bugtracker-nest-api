@@ -1,5 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MinLength,
+} from 'class-validator';
 import { IssuePriority, IssueStatus } from '../../../generated/prisma/enums';
 
 export class UpdateIssueDto {
@@ -24,7 +30,9 @@ export class UpdateIssueDto {
   @IsEnum(IssuePriority)
   priority?: IssuePriority;
 
-  @ApiPropertyOptional({ description: 'User id to assign the issue to, or null to unassign' })
+  @ApiPropertyOptional({
+    description: 'User id to assign the issue to, or null to unassign',
+  })
   @IsOptional()
   @IsUUID()
   assigneeId?: string | null;

@@ -10,14 +10,18 @@ export class IssuesService {
   constructor(private readonly prisma: PrismaService) {}
 
   private async assertProjectExists(projectId: string) {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
     if (!project) {
       throw new NotFoundException('Project not found');
     }
   }
 
   private async assertAssigneeExists(assigneeId: string) {
-    const assignee = await this.prisma.user.findUnique({ where: { id: assigneeId } });
+    const assignee = await this.prisma.user.findUnique({
+      where: { id: assigneeId },
+    });
     if (!assignee) {
       throw new NotFoundException('Assignee not found');
     }
@@ -62,11 +66,16 @@ export class IssuesService {
       this.prisma.issue.count({ where }),
     ]);
 
-    return { data, meta: { page, limit, total, pageCount: Math.ceil(total / limit) } };
+    return {
+      data,
+      meta: { page, limit, total, pageCount: Math.ceil(total / limit) },
+    };
   }
 
   async findOne(projectId: string, id: string) {
-    const issue = await this.prisma.issue.findFirst({ where: { id, projectId } });
+    const issue = await this.prisma.issue.findFirst({
+      where: { id, projectId },
+    });
     if (!issue) {
       throw new NotFoundException('Issue not found');
     }

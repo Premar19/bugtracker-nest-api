@@ -23,7 +23,7 @@ The code is organised the way Nest expects: one module per domain concern, each 
 ```
 src/
   auth/       # register, login, JWT strategy, guards, roles decorator
-  users/      # user lookups used by auth
+  users/      # user lookups, admin-only role management
   projects/   # project CRUD, ownership checks
   issues/     # issue CRUD, filtering, pagination
   prisma/     # PrismaService — a single injectable DB client
@@ -31,9 +31,15 @@ src/
 
 Nest's module + provider (dependency injection) system plays the same role a hand-rolled service layer would in a simpler framework — it just makes the separation of concerns and testability structural rather than a convention you have to enforce yourself.
 
-**Access control** has two layers:
-- `JwtAuthGuard` on every `projects`/`issues` route — you must be authenticated.
-- Ownership checks inside `ProjectsService` — only a project's owner or a user with the `ADMIN` role can update or delete it. Issue creation/updates are open to any authenticated user, matching the brief's "members can create/update issues."
+**Access control** has three layers, and the split between them is deliberate:
+
+- `JwtAuthGuard` on every `projects`/`issues`/`users` route — you must be authenticated.
+- `RolesGuard` + `@Roles(Role.ADMIN)` on `PATCH /users/:id/role` — a pure role check, decided entirely from the JWT payload with no database access.
+- **Ownership checks inside `ProjectsService`** — only a project's owner or an `ADMIN` can update or delete it. Issue creation/updates are open to any authenticated user, matching the brief's "members can create/update issues."
+
+Role and ownership are enforced in *different layers* because they're different questions. "Are you an admin?" is answered by the token alone, so a guard can settle it before the request reaches a controller. "Do you own project X?" requires a database lookup, which a guard has no clean way to do — so it lives in the service, next to the data it needs.
+
+**Bootstrapping the first admin:** role changes are admin-only, which leaves a chicken-and-egg problem — a fresh database has no admin, so nobody can promote anyone. `npm run seed` resolves it by creating (or promoting) the account in `ADMIN_EMAIL`/`ADMIN_PASSWORD` directly. Admins also can't change their *own* role, so the last admin can't accidentally lock everyone out.
 
 ## Running it
 
@@ -52,22 +58,24 @@ cp .env.example .env         # adjust DATABASE_URL if needed
 docker compose up -d postgres # or point DATABASE_URL at your own Postgres
 npm install
 npm run prisma:migrate
+npm run seed                 # optional: creates the first ADMIN from .env
 npm run start:dev
 ```
 
 ## Running the tests
 
 ```bash
-npm test          # unit tests (issues service)
-npm run test:e2e  # e2e tests (auth flow, projects + issues flow) — needs Postgres running
+npm test          # 9 unit tests (issues service, fully mocked — no database)
+npm run test:e2e  # 21 e2e tests (auth, roles, projects + issues) — needs Postgres running
 ```
 
 ## API overview
 
 | Method | Route | Description |
 |---|---|---|
-| POST | `/auth/register` | Register a new user |
+| POST | `/auth/register` | Register a new user (always created as `MEMBER`) |
 | POST | `/auth/login` | Log in, receive a JWT |
+| PATCH | `/users/:id/role` | Grant or revoke a user's admin role (**admins only**) |
 | POST | `/projects` | Create a project |
 | GET | `/projects` | List your projects |
 | GET | `/projects/:id` | Get a project |

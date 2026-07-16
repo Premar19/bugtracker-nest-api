@@ -67,9 +67,16 @@ describe('IssuesService', () => {
     it('creates the issue when the project and assignee exist', async () => {
       prisma.project.findUnique.mockResolvedValue({ id: projectId });
       prisma.user.findUnique.mockResolvedValue({ id: 'user-1' });
-      prisma.issue.create.mockResolvedValue({ id: issueId, title: 'Bug', projectId });
+      prisma.issue.create.mockResolvedValue({
+        id: issueId,
+        title: 'Bug',
+        projectId,
+      });
 
-      const result = await service.create(projectId, { title: 'Bug', assigneeId: 'user-1' });
+      const result = await service.create(projectId, {
+        title: 'Bug',
+        assigneeId: 'user-1',
+      });
 
       expect(result).toEqual({ id: issueId, title: 'Bug', projectId });
       expect(prisma.issue.create).toHaveBeenCalledWith({
@@ -91,8 +98,8 @@ describe('IssuesService', () => {
       prisma.issue.count.mockResolvedValue(1);
 
       const result = await service.findAll(projectId, {
-        status: 'OPEN' as any,
-        priority: 'HIGH' as any,
+        status: 'OPEN',
+        priority: 'HIGH',
         page: 2,
         limit: 5,
       });
@@ -115,7 +122,9 @@ describe('IssuesService', () => {
     it('throws NotFoundException when the issue is not in the project', async () => {
       prisma.issue.findFirst.mockResolvedValue(null);
 
-      await expect(service.findOne(projectId, issueId)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(projectId, issueId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('returns the issue when found', async () => {
@@ -132,7 +141,9 @@ describe('IssuesService', () => {
     it('throws NotFoundException instead of deleting when the issue is missing', async () => {
       prisma.issue.findFirst.mockResolvedValue(null);
 
-      await expect(service.remove(projectId, issueId)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(projectId, issueId)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(prisma.issue.delete).not.toHaveBeenCalled();
     });
 
@@ -142,7 +153,9 @@ describe('IssuesService', () => {
 
       await service.remove(projectId, issueId);
 
-      expect(prisma.issue.delete).toHaveBeenCalledWith({ where: { id: issueId } });
+      expect(prisma.issue.delete).toHaveBeenCalledWith({
+        where: { id: issueId },
+      });
     });
   });
 });

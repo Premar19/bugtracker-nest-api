@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
@@ -33,7 +37,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
+    const passwordMatches = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
     if (!passwordMatches) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -41,8 +48,16 @@ export class AuthService {
     return this.buildAuthResponse(user);
   }
 
-  private buildAuthResponse(user: { id: string; email: string; role: JwtPayload['role'] }) {
-    const payload: JwtPayload = { sub: user.id, email: user.email, role: user.role };
+  private buildAuthResponse(user: {
+    id: string;
+    email: string;
+    role: JwtPayload['role'];
+  }) {
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
     return {
       accessToken: this.jwtService.sign(payload),
       user: { id: user.id, email: user.email, role: user.role },

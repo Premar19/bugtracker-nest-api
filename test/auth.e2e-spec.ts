@@ -3,6 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
+import { AuthResponseBody } from './types';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication<App>;
@@ -16,7 +17,11 @@ describe('Auth (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
     await app.init();
   });
@@ -38,9 +43,10 @@ describe('Auth (e2e)', () => {
       .send({ email, password })
       .expect(201);
 
-    expect(res.body.accessToken).toEqual(expect.any(String));
-    expect(res.body.user).toMatchObject({ email, role: 'MEMBER' });
-    expect(res.body.user.passwordHash).toBeUndefined();
+    const body = res.body as AuthResponseBody;
+    expect(body.accessToken).toEqual(expect.any(String));
+    expect(body.user).toMatchObject({ email, role: 'MEMBER' });
+    expect(body.user.passwordHash).toBeUndefined();
   });
 
   it('rejects a duplicate registration', () => {
@@ -56,7 +62,9 @@ describe('Auth (e2e)', () => {
       .send({ email, password })
       .expect(200);
 
-    expect(res.body.accessToken).toEqual(expect.any(String));
+    expect((res.body as AuthResponseBody).accessToken).toEqual(
+      expect.any(String),
+    );
   });
 
   it('rejects login with the wrong password', () => {
