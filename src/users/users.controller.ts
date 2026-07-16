@@ -19,7 +19,7 @@ export class UsersController {
   @Patch(':id/role')
   @Roles(Role.ADMIN)
   @ApiOperation({
-    summary: 'Grant or revoke a user’s admin role (admins only)',
+    summary: "Grant or revoke a user's admin role (admins only)",
   })
   updateRole(
     @Param('id') id: string,

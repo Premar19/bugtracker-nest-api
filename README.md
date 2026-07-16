@@ -1,12 +1,12 @@
 # BugTracker API
 
-A multi-user issue-tracking REST API — a stripped-down Jira/Linear backend — built with **Nest.js**, **TypeScript**, and **PostgreSQL**.
+A multi-user issue-tracking REST API (a stripped-down Jira/Linear backend) built with **Nest.js**, **TypeScript**, and **PostgreSQL**.
 
 `Nest.js` · `TypeScript` · `PostgreSQL` · `Prisma` · `JWT` · `Docker` · `Jest`
 
 ## Why this project
 
-This project demonstrates a complete backend lifecycle: JWT authentication with bcrypt-hashed passwords, role-based and ownership-based access control, a relational schema (users → projects → issues) managed through Prisma migrations, request validation with DTOs, auto-generated OpenAPI docs, and a Jest unit + e2e test suite — all containerised with Docker Compose for one-command setup.
+This project demonstrates a complete backend lifecycle: JWT authentication with bcrypt-hashed passwords, role-based and ownership-based access control, a relational schema (users → projects → issues) managed through Prisma migrations, request validation with DTOs, auto-generated OpenAPI docs, and a Jest unit + e2e test suite, all containerised with Docker Compose for one-command setup.
 
 ## Screenshot
 
@@ -26,20 +26,20 @@ src/
   users/      # user lookups, admin-only role management
   projects/   # project CRUD, ownership checks
   issues/     # issue CRUD, filtering, pagination
-  prisma/     # PrismaService — a single injectable DB client
+  prisma/     # PrismaService: a single injectable DB client
 ```
 
-Nest's module + provider (dependency injection) system plays the same role a hand-rolled service layer would in a simpler framework — it just makes the separation of concerns and testability structural rather than a convention you have to enforce yourself.
+Nest's module + provider (dependency injection) system plays the same role a hand-rolled service layer would in a simpler framework. It just makes the separation of concerns and testability structural rather than a convention you have to enforce yourself.
 
 **Access control** has three layers, and the split between them is deliberate:
 
-- `JwtAuthGuard` on every `projects`/`issues`/`users` route — you must be authenticated.
-- `RolesGuard` + `@Roles(Role.ADMIN)` on `PATCH /users/:id/role` — a pure role check, decided entirely from the JWT payload with no database access.
-- **Ownership checks inside `ProjectsService`** — only a project's owner or an `ADMIN` can update or delete it. Issue creation/updates are open to any authenticated user, matching the brief's "members can create/update issues."
+- `JwtAuthGuard` on every `projects`/`issues`/`users` route: you must be authenticated.
+- `RolesGuard` + `@Roles(Role.ADMIN)` on `PATCH /users/:id/role`: a pure role check, decided entirely from the JWT payload with no database access.
+- **Ownership checks inside `ProjectsService`**: only a project's owner or an `ADMIN` can update or delete it. Issue creation/updates are open to any authenticated user, matching the brief's "members can create/update issues."
 
-Role and ownership are enforced in *different layers* because they're different questions. "Are you an admin?" is answered by the token alone, so a guard can settle it before the request reaches a controller. "Do you own project X?" requires a database lookup, which a guard has no clean way to do — so it lives in the service, next to the data it needs.
+Role and ownership are enforced in *different layers* because they're different questions. "Are you an admin?" is answered by the token alone, so a guard can settle it before the request reaches a controller. "Do you own project X?" requires a database lookup, which a guard has no clean way to do, so it lives in the service, next to the data it needs.
 
-**Bootstrapping the first admin:** role changes are admin-only, which leaves a chicken-and-egg problem — a fresh database has no admin, so nobody can promote anyone. `npm run seed` resolves it by creating (or promoting) the account in `ADMIN_EMAIL`/`ADMIN_PASSWORD` directly. Admins also can't change their *own* role, so the last admin can't accidentally lock everyone out.
+**Bootstrapping the first admin:** role changes are admin-only, which leaves a chicken-and-egg problem, because a fresh database has no admin and so nobody can promote anyone. `npm run seed` resolves it by creating (or promoting) the account in `ADMIN_EMAIL`/`ADMIN_PASSWORD` directly. Admins also can't change their *own* role, so the last admin can't accidentally lock everyone out.
 
 ## Running it
 
@@ -65,8 +65,8 @@ npm run start:dev
 ## Running the tests
 
 ```bash
-npm test          # 9 unit tests (issues service, fully mocked — no database)
-npm run test:e2e  # 21 e2e tests (auth, roles, projects + issues) — needs Postgres running
+npm test          # 9 unit tests (issues service, fully mocked, no database)
+npm run test:e2e  # 21 e2e tests (auth, roles, projects + issues), needs Postgres running
 ```
 
 ## API overview

@@ -8,7 +8,7 @@ const SALT_ROUNDS = 10;
 
 /**
  * Bootstraps the first ADMIN. Promotion is admin-only, so without this there is
- * no path to a first admin — the role would be unreachable.
+ * no path to a first admin and the role would be unreachable.
  */
 async function main() {
   const email = process.env.ADMIN_EMAIL;
