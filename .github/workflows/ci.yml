@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Lint, build and test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+
+    # The e2e suite talks to a real database, so CI gets a real Postgres.
+    # The health check gates the job: steps do not start until it accepts
+    # connections, which is the same race docker-compose solves locally.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: bugtracker
+          POSTGRES_PASSWORD: bugtracker
+          POSTGRES_DB: bugtracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bugtracker"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://bugtracker:bugtracker@localhost:5432/bugtracker?schema=public
+      JWT_SECRET: ci-only-secret
+      JWT_EXPIRES_IN: 1d
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      # `npm ci` runs postinstall, which is `prisma generate`.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint:ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Apply migrations
+        run: npm run prisma:deploy
+
+      - name: Unit tests
+        run: npm test
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The multi-stage Dockerfile has broken before in ways the test suite
+      # could not catch (a missing tsconfig.json changed how the Prisma client
+      # was generated), so the build is verified on its own.
+      - name: Build image
+        run: docker build -t bugtracker-api:ci .
+
+      - name: Boot the stack and check it serves
+        run: |
+          docker compose up -d --build
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/api-json > /dev/null; then
+              echo "API is serving OpenAPI docs"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not come up in time"
+          docker compose logs
+          exit 1
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
