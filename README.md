@@ -1,5 +1,7 @@
 # BugTracker API
 
+[![CI](https://github.com/Premar19/bugtracker-nest-api/actions/workflows/ci.yml/badge.svg)](https://github.com/Premar19/bugtracker-nest-api/actions/workflows/ci.yml)
+
 A multi-user issue-tracking REST API (a stripped-down Jira/Linear backend) built with **Nest.js**, **TypeScript**, and **PostgreSQL**.
 
 `Nest.js` · `TypeScript` · `PostgreSQL` · `Prisma` · `JWT` · `Docker` · `Jest`
@@ -68,6 +70,15 @@ npm run start:dev
 npm test          # 9 unit tests (issues service, fully mocked, no database)
 npm run test:e2e  # 21 e2e tests (auth, roles, projects + issues), needs Postgres running
 ```
+
+## CI
+
+Every push and pull request to `main` runs [the CI workflow](.github/workflows/ci.yml):
+
+- Lint, build, migrations, unit tests and e2e tests, on **Node 22 and 24**. The e2e job gets a real Postgres service container rather than a mock, so the database layer is genuinely exercised.
+- A separate job builds the Docker image and boots the compose stack, then polls `/api-json` until the API responds. The image is checked independently because it has broken before in a way the test suite could not catch: a missing `tsconfig.json` in the build context changed how the Prisma client was generated, and only showed up inside the container.
+
+CI uses `npm run lint:ci`, which unlike `npm run lint` does not pass `--fix`. A linter that repairs its own findings would report success no matter what it found.
 
 ## API overview
 
