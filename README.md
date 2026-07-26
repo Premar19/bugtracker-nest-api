@@ -16,7 +16,7 @@ _Swagger UI at `/api`, listing all endpoints grouped by `auth`, `projects`, and 
 
 ![Swagger UI](docs/swagger-screenshot.png)
 
-> Run the app and open `http://localhost:3000/api` to see it live; drop a screenshot at `docs/swagger-screenshot.png` to render it here.
+> Need to run the app and open `http://localhost:3000/api` to see it live; drop a screenshot at `docs/swagger-screenshot.png` to render it here.
 
 ## Architecture
 
