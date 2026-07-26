@@ -12,11 +12,11 @@ This project demonstrates a complete backend lifecycle: JWT authentication with 
 
 ## Screenshot
 
-_Swagger UI at `/api`, listing all endpoints grouped by `auth`, `projects`, and `issues`:_
+_Swagger UI at `/api`, listing all endpoints grouped by `users`, `auth`, `projects`, and `issues`:_
 
 ![Swagger UI](docs/swagger-screenshot.png)
 
-> Need to run the app and open `http://localhost:3000/api` to see it live; drop a screenshot at `docs/swagger-screenshot.png` to render it here.
+_Explore the API interactively by running the app and opening `http://localhost:3000/api`._
 
 ## Architecture
 
